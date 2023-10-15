@@ -214,7 +214,7 @@ public readonly record struct BigDecimal : IComparable, IComparable<BigDecimal>,
 	/// 
 	/// 
 	/// If AlwaysTruncate is set to true all operations are affected.</summary>
-	public static Int32 Precision { get; set; } = 5000;
+	public static Int32 Precision { get; set; } = 50;
 
 	/// <summary>
 	/// Specifies whether the significant digits should be truncated to the given precision after each operation.	
@@ -1043,6 +1043,75 @@ public readonly record struct BigDecimal : IComparable, IComparable<BigDecimal>,
 
 	/// <summary>Truncates the BigDecimal at the decimal point. Equivalent to using Floor.</summary>
 	public static BigDecimal Truncate(BigDecimal value) => Floor(value);
+
+	 /// <summary>
+     /// Truncates the number to the specified significant digits without rounding.
+     /// </summary>
+     /// <param name="significantDigits">The number of significant digits to truncate to.</param>
+     /// <returns>The truncated number.</returns>
+     public static BigDecimal Truncate(BigDecimal value, int significantDigits = 50)
+     {
+         if (significantDigits < 0 || significantDigits > 2_000_000_000)
+             throw new ArgumentOutOfRangeException(paramName: nameof(significantDigits));
+
+         if (value.Exponent >= -significantDigits) return value;
+
+         var shortened = value;
+         shortened = Normalize(shortened);
+
+         var mantissa = shortened.Mantissa;
+         var exponent = shortened.Exponent;
+
+         while (exponent < -significantDigits)
+         {
+	         mantissa = BigInteger.DivRem(mantissa, 10, out var rem);
+	         exponent++;
+         }
+
+         // Убираем лишние нули из мантиссы
+         while (mantissa % 10 == 0 && mantissa != 0)
+         {
+	         mantissa /= 10;
+	         exponent++;
+         }
+
+         return new BigDecimal(new Tuple<BigInteger, Int32>(mantissa, exponent));
+     }
+
+	 /// <summary>
+     /// Rounds up the number towards positive infinity.
+     /// </summary>
+     /// <param name="significantDigits">The number of significant digits to round to.</param>
+     /// <returns>The rounded number.</returns>
+     public static BigDecimal RoundUp(BigDecimal value, int significantDigits)
+     {
+         if (significantDigits < 0 || significantDigits > 2_000_000_000)
+             throw new ArgumentOutOfRangeException(paramName: nameof(significantDigits));
+
+         if (value.Exponent >= -significantDigits) return value;
+
+         var shortened = value;
+         shortened = Normalize(shortened);
+
+         var mantissa = shortened.Mantissa;
+         var exponent = shortened.Exponent;
+
+         while (exponent < -significantDigits)
+         {
+	         mantissa = BigInteger.DivRem(mantissa, 10, out var rem);
+             if (shortened.Mantissa >= 0)
+             {
+	             mantissa += rem > 0 ? 1 : 0;
+             }
+             else
+             {
+	             mantissa -= rem < 0 ? 1 : 0;
+             }
+             exponent++;
+         }
+
+         return new BigDecimal(new Tuple<BigInteger, Int32>(mantissa, exponent));
+     }
 
 	/// <summary>Rounds a BigDecimal value to the nearest integral value.</summary>
 	public static BigInteger Round(BigDecimal value) => Round(value, MidpointRounding.AwayFromZero);
