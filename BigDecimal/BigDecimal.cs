@@ -214,7 +214,7 @@ public readonly record struct BigDecimal : IComparable, IComparable<BigDecimal>,
 	/// 
 	/// 
 	/// If AlwaysTruncate is set to true all operations are affected.</summary>
-	public static Int32 Precision { get; set; } = 50;
+	public static Int32 Precision { get; set; } = 30;
 
 	/// <summary>
 	/// Specifies whether the significant digits should be truncated to the given precision after each operation.	
@@ -224,7 +224,7 @@ public readonly record struct BigDecimal : IComparable, IComparable<BigDecimal>,
 	/// This should generally be left disabled by default.
 	/// This setting may be useful if you are running into memory or performance issues, as could conceivably be brought on by many operations on irrational numbers.
 	/// </summary>
-	public static Boolean AlwaysTruncate { get; set; } = false;
+	public static Boolean AlwaysTruncate { get; set; } = true;
 
 	/// <summary>Specifies whether a call to Normalize is made after every operation and during constructor invocation. The default value is true.</summary>
 	public static Boolean AlwaysNormalize { get; set; } = true;
